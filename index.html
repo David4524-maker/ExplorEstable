@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ExplorEstable</title>
+<style>
+:root{--bg:#eef1ee;--panel:#fff;--ink:#17211c;--mute:#5f6f66;--line:#d3dbd5;--acc:#2f5d50;--acc-ink:#fff;--hover:#e3ebe6;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101512;--panel:#171e1a;--ink:#e3ebe6;--mute:#93a49a;--line:#2a352f;--acc:#7fc3ae;--acc-ink:#0d1a15;--hover:#1f2923;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101512;--panel:#171e1a;--ink:#e3ebe6;--mute:#93a49a;--line:#2a352f;--acc:#7fc3ae;--acc-ink:#0d1a15;--hover:#1f2923;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif}
+.app{max-width:980px;margin:0 auto;padding:20px 16px 32px}
+h1{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:1.5rem;font-weight:700;letter-spacing:-.02em}
+h1 svg{width:28px;height:28px;flex:none}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}
+.bar .sp{flex:1}
+button,select,input[type=search]{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 11px}
+button{cursor:pointer}
+button:hover:not(:disabled){background:var(--hover)}
+button:disabled{opacity:.45;cursor:default}
+button.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:600}
+button.pri:hover{background:var(--acc);filter:brightness(1.08)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+input[type=search]{flex:1 1 180px;min-width:0}
+label.chk{display:flex;gap:6px;align-items:center;color:var(--mute)}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;margin-bottom:10px;color:var(--mute)}
+.crumbs button{border:0;background:none;padding:2px 4px;color:var(--ink)}
+.crumbs button:last-of-type{font-weight:700}
+.note{margin:0 0 10px;padding:8px 12px;border-left:3px solid var(--acc);background:var(--panel);color:var(--mute);border-radius:0 6px 6px 0}
+.wrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px 12px;white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);font-weight:600;color:var(--mute)}
+th button{border:0;background:none;padding:0;font-weight:inherit;color:inherit}
+td.name{width:100%;max-width:0;overflow:hidden;text-overflow:ellipsis}
+.r{text-align:right}
+tbody tr{cursor:pointer;border-bottom:1px solid var(--line)}
+tbody tr:last-child{border-bottom:0}
+tbody tr:hover,tbody tr:focus-visible{background:var(--hover)}
+td.m{color:var(--mute)}
+.empty{padding:28px;text-align:center;color:var(--mute)}
+.st{margin-top:8px;color:var(--mute);font-size:.9rem}
+@media(max-width:640px){.hm{display:none}}
+</style>
+</head>
+<body>
+<main class="app">
+  <h1>
+    <svg viewBox="0 0 28 28" aria-hidden="true"><rect x="2" y="5" width="24" height="19" rx="4" fill="none" stroke="var(--acc)" stroke-width="2.4"/><path d="M2 11h24" stroke="var(--acc)" stroke-width="2.4"/><path d="M8 18h12" stroke="var(--acc)" stroke-width="2.4" stroke-linecap="round"/></svg>
+    ExplorEstable
+  </h1>
+  <div class="bar">
+    <button id="up" data-i="up"></button>
+    <button id="pick" class="pri" data-i="pick"></button>
+    <input id="q" type="search" data-p="search">
+    <label class="chk"><input id="hid" type="checkbox"><span data-i="hidden"></span></label>
+    <span class="sp"></span>
+    <select id="lang" aria-label="Language"></select>
+  </div>
+  <input id="files" type="file" webkitdirectory multiple hidden>
+  <nav class="crumbs" id="crumbs"></nav>
+  <p class="note" id="note" data-i="demo"></p>
+  <div class="wrap"><table>
+    <thead><tr id="head"></tr></thead>
+    <tbody id="rows"></tbody>
+  </table><div class="empty" id="empty" hidden data-i="empty"></div></div>
+  <div class="st" id="st"></div>
+</main>
+<script>
+const R={
+es:"Subir|Abrir carpeta|Mostrar ocultos|Buscar…|Nombre|Tipo|Tamaño|Modificado|Carpeta|Archivo|elementos|Carpeta vacía|Demostración. Abre una carpeta de tu equipo: solo se lee, nada se sube ni se modifica.",
+en:"Up|Open folder|Show hidden|Search…|Name|Type|Size|Modified|Folder|File|items|Empty folder|Demo view. Open a folder from your computer: it is only read, nothing is uploaded or changed.",
+fr:"Monter|Ouvrir un dossier|Afficher cachés|Rechercher…|Nom|Type|Taille|Modifié|Dossier|Fichier|éléments|Dossier vide|Démonstration. Ouvrez un dossier de votre ordinateur : il est lu seulement, rien n’est envoyé ni modifié.",
+de:"Hoch|Ordner öffnen|Versteckte zeigen|Suchen…|Name|Typ|Größe|Geändert|Ordner|Datei|Elemente|Leerer Ordner|Demo-Ansicht. Öffne einen Ordner deines Computers: Er wird nur gelesen, nichts wird hochgeladen oder verändert.",
+pt:"Subir|Abrir pasta|Mostrar ocultos|Pesquisar…|Nome|Tipo|Tamanho|Modificado|Pasta|Arquivo|itens|Pasta vazia|Demonstração. Abra uma pasta do seu computador: ela é apenas lida, nada é enviado nem alterado.",
+it:"Su|Apri cartella|Mostra nascosti|Cerca…|Nome|Tipo|Dimensione|Modificato|Cartella|File|elementi|Cartella vuota|Demo. Apri una cartella del tuo computer: viene solo letta, nulla viene caricato o modificato.",
+zh:"上一级|打开文件夹|显示隐藏文件|搜索…|名称|类型|大小|修改时间|文件夹|文件|项|空文件夹|演示视图。打开本机文件夹：仅读取，不会上传或修改任何内容。",
+ja:"上へ|フォルダを開く|隠しファイルを表示|検索…|名前|種類|サイズ|更新日時|フォルダ|ファイル|項目|空のフォルダ|デモ表示です。パソコンのフォルダを開いてください。読み取りのみで、アップロードや変更は行いません。",
+ru:"Вверх|Открыть папку|Показать скрытые|Поиск…|Имя|Тип|Размер|Изменён|Папка|Файл|элементов|Папка пуста|Демо. Откройте папку на компьютере: она только читается, ничего не загружается и не изменяется.",
+ko:"위로|폴더 열기|숨김 표시|검색…|이름|유형|크기|수정한 날짜|폴더|파일|항목|빈 폴더|데모 화면입니다. 내 컴퓨터의 폴더를 여세요. 읽기만 하며 업로드나 변경은 없습니다."};
+const LN={es:"Español",en:"English",fr:"Français",de:"Deutsch",pt:"Português",it:"Italiano",zh:"中文",ja:"日本語",ru:"Русский",ko:"한국어"};
+const K="up pick hidden search name type size modified folder file items empty demo".split(" ");
+const S=Object.fromEntries(Object.entries(R).map(([c,s])=>[c,Object.fromEntries(s.split("|").map((v,i)=>[K[i],v]))]));
+const $=id=>document.getElementById(id);
+const h=(tag,props={},...kids)=>{const e=document.createElement(tag);Object.assign(e,props);e.append(...kids);return e};
+
+// ---- datos: carpeta de demostración ----
+const D=(n,c)=>({n,d:true,c}), F=(n,s,m)=>({n,d:false,s,m:Date.parse(m),f:null});
+const demo=D("Demo",[
+  D("Documentos",[F("Informe.pdf",482113,"2026-09-14T10:20"),F("Notas.txt",2048,"2026-10-02T18:05")]),
+  D("Fotos",[F("playa.jpg",3201442,"2026-07-21T09:12"),F("cumple.png",1204880,"2026-08-30T21:40")]),
+  D(".config",[F("ajustes.json",312,"2026-01-05T08:00")]),
+  F("LEEME.md",1530,"2026-11-01T12:00")]);
+
+let lang="en",root=demo,stack=[demo],sort=["name",false],isDemo=true;
+try{const sv=localStorage.getItem("ee-lang");if(sv&&S[sv])lang=sv;else{const c=navigator.language.slice(0,2);if(S[c])lang=c}}catch(e){const c=navigator.language.slice(0,2);if(S[c])lang=c}
+
+function fromFiles(list){
+  let r=null;
+  for(const f of list){
+    const p=f.webkitRelativePath.split("/");
+    if(!r)r=D(p[0],[]);
+    let cur=r;
+    for(let i=1;i<p.length-1;i++){
+      let nx=cur.c.find(x=>x.d&&x.n===p[i]);
+      if(!nx){nx=D(p[i],[]);cur.c.push(nx)}
+      cur=nx;
+    }
+    cur.c.push({n:p[p.length-1],d:false,s:f.size,m:f.lastModified,f});
+  }
+  return r;
+}
+const human=n=>{if(n<1024)return n+" B";for(const u of["KB","MB","GB","TB"]){n/=1024;if(n<1024)return n.toFixed(1)+" "+u}return(n/1024).toFixed(1)+" PB"};
+const key={name:x=>x.n.toLowerCase(),type:x=>(x.n.split(".").pop()||"").toLowerCase(),size:x=>x.s||0,modified:x=>x.m||0};
+
+function render(){
+  const t=S[lang],cur=stack.at(-1);
+  document.documentElement.lang=lang;
+  document.querySelectorAll("[data-i]").forEach(e=>e.textContent=t[e.dataset.i]);
+  $("q").placeholder=t.search;
+  $("note").hidden=!isDemo;
+  $("up").disabled=stack.length<2;
+
+  const cr=$("crumbs");cr.replaceChildren();
+  stack.forEach((n,i)=>{
+    if(i)cr.append("›");
+    cr.append(h("button",{textContent:n.n,onclick:()=>{stack=stack.slice(0,i+1);render()}}));
+  });
+
+  const head=$("head");head.replaceChildren();
+  [["name",""],["type","hm"],["size","r"],["modified","hm"]].forEach(([c,cls])=>{
+    const on=sort[0]===c;
+    head.append(h("th",{className:cls,ariaSort:on?(sort[1]?"descending":"ascending"):"none"},
+      h("button",{textContent:t[c]+(on?(sort[1]?" ▼":" ▲"):""),onclick:()=>{sort=[c,sort[0]===c?!sort[1]:false];render()}})));
+  });
+
+  const q=$("q").value.trim().toLowerCase(),sh=$("hid").checked;
+  const rows=cur.c.filter(x=>(sh||!x.n.startsWith("."))&&(!q||x.n.toLowerCase().includes(q)));
+  rows.sort((a,b)=>{const ka=key[sort[0]](a),kb=key[sort[0]](b);return(ka<kb?-1:ka>kb?1:0)*(sort[1]?-1:1)});
+  rows.sort((a,b)=>b.d-a.d);
+
+  const fmt=new Intl.DateTimeFormat(lang,{dateStyle:"short",timeStyle:"short"});
+  const tb=$("rows");tb.replaceChildren();
+  rows.forEach(x=>{
+    const go=()=>{
+      if(x.d){stack.push(x);$("q").value="";render()}
+      else if(x.f)window.open(URL.createObjectURL(x.f),"_blank","noopener");
+    };
+    const kind=x.d?t.folder:(x.n.includes(".")?x.n.split(".").pop().toUpperCase():t.file);
+    const tr=h("tr",{tabIndex:0,onclick:go,onkeydown:e=>{if(e.key==="Enter")go()}},
+      h("td",{className:"name",textContent:(x.d?"📁 ":"📄 ")+x.n,title:x.n}),
+      h("td",{className:"hm",textContent:kind}),
+      h("td",{className:"r",textContent:x.d?"":human(x.s)}),
+      h("td",{className:"hm m",textContent:fmt.format(x.m||Date.now())}));
+    tb.append(tr);
+  });
+  $("empty").hidden=rows.length>0;
+  $("st").textContent=rows.length+" "+t.items;
+}
+
+$("lang").append(...Object.entries(LN).map(([c,n])=>h("option",{value:c,textContent:n})));
+$("lang").value=lang;
+$("lang").onchange=e=>{lang=e.target.value;try{localStorage.setItem("ee-lang",lang)}catch(_){}render()};
+$("up").onclick=()=>{stack.pop();render()};
+$("pick").onclick=()=>$("files").click();
+$("files").onchange=e=>{
+  const r=fromFiles(e.target.files);
+  if(r){root=r;stack=[r];isDemo=false;$("q").value="";render()}
+};
+$("q").oninput=render;$("hid").onchange=render;
+render();
+</script>
+</body>
+</html>
